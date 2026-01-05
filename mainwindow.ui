@@ -14,6 +14,26 @@
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
+   <widget class="QWidget" name="rightPanel" native="true">
+    <property name="geometry">
+     <rect>
+      <x>500</x>
+      <y>10</y>
+      <width>280</width>
+      <height>461</height>
+     </rect>
+    </property>
+    <widget class="QListWidget" name="musicList">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>0</y>
+       <width>260</width>
+       <height>461</height>
+      </rect>
+     </property>
+    </widget>
+   </widget>
    <widget class="QWidget" name="">
     <property name="geometry">
      <rect>
