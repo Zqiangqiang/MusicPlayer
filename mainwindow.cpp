@@ -24,6 +24,16 @@ MainWindow::MainWindow(QWidget *parent)
 
     // 初始化所有按钮
     initButton();
+    // 初始化状态栏
+    QLabel *statusLabel = new QLabel(this);
+    statusLabel->setText("Author:xiang");
+    this->statusBar()->addPermanentWidget(statusLabel);
+    // 处理菜单栏操作
+    connect(ui->actionopen_Dir, &QAction::triggered, this, &MainWindow::onActionOpenDirClicked);
+    connect(ui->actionOpen_file, &QAction::triggered, this, &MainWindow::onActionOpenFileClicked);
+    ui->actionOpen_file->setShortcut(QKeySequence::Open);
+    connect(ui->actionClose_dir, &QAction::triggered, this, &MainWindow::onActionCloseDirClicked);
+    ui->actionClose_dir->setShortcut(QKeySequence::Close);
 
     // Qt6 必须显式创建音频输出，否则没有声音
     m_player = new QMediaPlayer(this);
@@ -33,14 +43,10 @@ MainWindow::MainWindow(QWidget *parent)
     // 设置音量（0.0 ~ 1.0）
     m_audioOutput->setVolume(1.0);
     // 设置音频源
-    m_player->setSource(QUrl::fromLocalFile("/Users/xiang/Desktop/music/Fa_Ru_Xue.mp3"));
+    //m_player->setSource(QUrl::fromLocalFile("/Users/xiang/Desktop/music/Fa_Ru_Xue.mp3"));
 
     // 关联播放按钮
     connect(ui->playPauseBtn, &QPushButton::clicked, this, &MainWindow::handlePlaySlot);
-
-    // 可以使用QFileDialog选择目录
-    QString musicDir = "/Users/xiang/Desktop/music";
-    loadAppointMusicDir(musicDir);
 
     // 默认隐藏MusicList列表
     ui->rightPanel->hide();
@@ -55,6 +61,11 @@ MainWindow::MainWindow(QWidget *parent)
 
     // 关联音乐列表按钮
     connect(ui->musicListBtn, &QPushButton::clicked, this, [=](){
+        if (m_musicDir.isEmpty()) {
+            onActionOpenDirClicked();
+        }
+        loadAppointMusicDir(m_musicDir);
+
         QRect startRect, endRect;
 
         int w = ui->rightPanel->width();
@@ -226,6 +237,34 @@ void MainWindow::initButton()
     setButtonStyle(ui->musicListBtn, ":/musicList.png");
 }
 
+void MainWindow::onActionOpenDirClicked()
+{
+    QString dir = QFileDialog::getExistingDirectory(
+        this,                     // 父窗口
+        "Select Dir",            // 对话框标题
+        "./",                   // 默认打开当前目录
+        QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks // 选项
+        );
+
+    if (!dir.isEmpty()) {
+        m_musicDir = dir;
+    }
+}
+
+void MainWindow::onActionOpenFileClicked()
+{
+    QString filepath = QFileDialog::getOpenFileName(this, "Select File", "./", "Audio (*.mp3 *.wav *.M4a)");
+    if (!filepath.isEmpty()) m_currentMusicPath = filepath;
+    m_player->setSource(QUrl::fromLocalFile(m_currentMusicPath));
+    // 更新唱片封面
+    updateDiscCover(m_currentMusicPath);
+}
+
+void MainWindow::onActionCloseDirClicked()
+{
+    m_musicDir = nullptr;
+}
+
 void MainWindow::loadAppointMusicDir(const QString &dirPath)
 {
     ui->musicList->clear();
@@ -239,9 +278,14 @@ void MainWindow::loadAppointMusicDir(const QString &dirPath)
     QStringList filters = {"*.mp3", "*.wav", "*.m4a"};
     QFileInfoList files = dir.entryInfoList(filters, QDir::Files);
 
+    QFont font("Arial", 22); // 设置字体大小
+    int rowHeight = ui->musicList->height() / 10;       // 每行高度
+
     for (QFileInfo &info : files) {
         // 显示给用户看的：歌名
         QListWidgetItem *item = new QListWidgetItem(info.baseName());
+        item->setFont(font);
+        item->setSizeHint(QSize(item->sizeHint().width(), rowHeight)); // 设置行高
         // 把路径保存到成员变量中
         m_musicList.append(info.absoluteFilePath());
         ui->musicList->addItem(item);
@@ -273,13 +317,14 @@ void MainWindow::updatePlayingItemState(int newIndex)
     for (int i = 0; i < ui->musicList->count(); ++i) {
         QListWidgetItem *item = ui->musicList->item(i);
         item->setForeground(Qt::white);
+        QFont font = item->font();  // 保留原来的字体大小
+        font.setBold(false);        // 取消粗体
         item->setFont(QFont());
         item->setIcon(QIcon());
     }
 
     // 设置当前播放项
     QListWidgetItem *currentItem = ui->musicList->item(newIndex);
-
     QFont font = currentItem->font();
     font.setBold(true); // 粗体
     currentItem->setFont(font);
@@ -426,7 +471,6 @@ void MainWindow::on_prevBtn_clicked()
 {
     playPrev();
 }
-
 
 void MainWindow::on_nextBtn_clicked()
 {

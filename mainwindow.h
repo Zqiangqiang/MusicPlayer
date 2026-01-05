@@ -6,6 +6,7 @@
 #include <QMediaPlayer>
 #include <QAudioOutput>
 #include <QDir>
+#include <QFileDialog>
 #include <QFile>
 #include <QFileInfo>
 #include <QPropertyAnimation>
@@ -47,6 +48,12 @@ private:
     void setButtonStyle(QPushButton* btn, const QString& filename);
     // 初始化按钮
     void initButton();
+    // 处理Open Dir菜单项
+    void onActionOpenDirClicked();
+    // 处理Open file菜单项
+    void onActionOpenFileClicked();
+    // 处理Close Dir菜单项
+    void onActionCloseDirClicked();
     // 加载指定目录下的歌曲信息
     void loadAppointMusicDir(const QString & dirPath);
     // 播放指定路径歌曲
@@ -82,6 +89,8 @@ private:
     // 动画显示部件
     QPropertyAnimation *m_listAnim;
     bool m_listVisible = false;
+    // 播放目录
+    QString m_musicDir;
     // 播放歌曲路径
     QStringList m_musicList;
     int m_currentIndex = -1;
