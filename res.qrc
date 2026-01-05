@@ -9,5 +9,6 @@
         <file>shuffle.png</file>
         <file>background.png</file>
         <file>playing.png</file>
+        <file>disc.png</file>
     </qresource>
 </RCC>

@@ -39,7 +39,7 @@
      <rect>
       <x>10</x>
       <y>430</y>
-      <width>460</width>
+      <width>441</width>
       <height>30</height>
      </rect>
     </property>
@@ -48,6 +48,19 @@
     </property>
     <property name="orientation">
      <enum>Qt::Orientation::Horizontal</enum>
+    </property>
+   </widget>
+   <widget class="QLabel" name="progressTipLabel">
+    <property name="geometry">
+     <rect>
+      <x>90</x>
+      <y>390</y>
+      <width>58</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string/>
     </property>
    </widget>
    <widget class="QWidget" name="">

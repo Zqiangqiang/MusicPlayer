@@ -10,6 +10,7 @@
 #include <QFileInfo>
 #include <QPropertyAnimation>
 #include <QListWidget>
+#include "rotatingdiscwidget.h"
 
 QT_BEGIN_NAMESPACE
 enum class PlayMode {
@@ -66,6 +67,11 @@ private:
     void onPositionChanged(qint64 position);
     // 拖动进度条处理
     void onSliderReleased();
+    // 旋转唱片
+    void updateDiscState();
+    // 更新唱片图片
+    void updateDiscCover(const QString &musicPath);
+
 
 private:   
     Ui::MainWindow *ui;
@@ -84,5 +90,8 @@ private:
     // 播放历史记录
     QVector<int> m_playHistory;
     int m_historyPos = -1;
+    // 旋转唱片
+    RotatingDiscWidget *m_discWidget;
+    QPropertyAnimation *m_discAnimation;
 };
 #endif // MAINWINDOW_H

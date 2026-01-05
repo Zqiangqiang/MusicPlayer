@@ -12,6 +12,8 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    // 默认不显示progressTipLabel标签
+    ui->progressTipLabel->hide();
 
     setWindowTitle("MusicPlayer");
     setFixedSize(800, 600);
@@ -34,6 +36,7 @@ MainWindow::MainWindow(QWidget *parent)
     // 关联播放按钮
     connect(ui->playPauseBtn, &QPushButton::clicked, this, &MainWindow::handlePlaySlot);
 
+    // 可以使用QFileDialog选择目录
     QString musicDir = "/Users/xiang/Desktop/music";
     loadAppointMusicDir(musicDir);
 
@@ -95,6 +98,53 @@ MainWindow::MainWindow(QWidget *parent)
 
     // 拖动进度
     connect(ui->progressSlider, &QSlider::sliderReleased, this, &MainWindow::onSliderReleased);
+
+    // 开始拖动进度条时显示标签
+    connect(ui->progressSlider, &QSlider::sliderPressed, this, [=](){
+        ui->progressTipLabel->show();
+    });
+
+    // 拖动中
+    connect(ui->progressSlider, &QSlider::sliderMoved, this, [=](int value){
+        // 转换为 mm:ss
+        int seconds = value / 1000;
+        int minutes = seconds / 60;
+        seconds = seconds % 60;
+        QString text = QString("%1:%2").arg(minutes, 2, 10, QChar('0')).arg(seconds, 2, 10, QChar('0'));
+        ui->progressTipLabel->setText(text);
+
+        // 动态移动 QLabel 位置（在 slider 上方）
+        // slider 宽度
+        int sliderWidth = ui->progressSlider->width();
+        // 根据 value / max 得到比例
+        double ratio = double(value) / ui->progressSlider->maximum();
+        int x = ui->progressSlider->x() + ratio * sliderWidth - ui->progressTipLabel->width()/3;
+        int y = ui->progressSlider->y() - ui->progressTipLabel->height() - 5; // 5 px 上方
+        ui->progressTipLabel->move(x, y);
+    });
+
+    // 松开 slider
+    connect(ui->progressSlider, &QSlider::sliderReleased, this, [=](){
+        ui->progressTipLabel->hide();
+        m_player->setPosition(ui->progressSlider->value());
+    });
+
+    // 初始化唱片
+    m_discWidget = new RotatingDiscWidget(this);
+    m_discWidget->setFixedSize(240, 240); // 圆盘大小
+    m_discWidget->move(50, 80);           // 放置位置
+    m_discWidget->setPixmap(QPixmap(":/disc.png"));
+
+    m_discAnimation = new QPropertyAnimation(m_discWidget, "angle", this);
+    m_discAnimation->setStartValue(0);
+    m_discAnimation->setEndValue(360);
+    m_discAnimation->setDuration(10000); // 10秒一圈
+    m_discAnimation->setLoopCount(-1);
+    m_discAnimation->setEasingCurve(QEasingCurve::Linear);
+
+    // 关联唱片旋转
+    connect(m_player, &QMediaPlayer::playbackStateChanged, this, &MainWindow::updateDiscState);
+
 }
 
 MainWindow::~MainWindow()
@@ -211,6 +261,8 @@ void MainWindow::playMusicByIndex(int index)
     recordHistory(index);       // 记录播放历史
     ui->playPauseBtn->setIcon(QIcon(":/play.png"));
 
+    // 切换唱片图片
+    updateDiscCover(m_currentMusicPath);
 }
 
 void MainWindow::updatePlayingItemState(int newIndex)
@@ -315,6 +367,40 @@ void MainWindow::onSliderReleased()
 {
     // 播放对应进度条位置
     m_player->setPosition(ui->progressSlider->value());
+}
+
+void MainWindow::updateDiscState()
+{
+    if (m_player->playbackState() == QMediaPlayer::PlayingState) {
+        m_discAnimation->start();   // 开始旋转
+    } else {
+        m_discAnimation->pause();   // 暂停旋转
+    }
+}
+
+void MainWindow::updateDiscCover(const QString &musicPath)
+{
+    QPixmap cover;
+
+    // 获取音乐文件所在目录
+    QFileInfo fileInfo(musicPath);
+    QDir dir = fileInfo.dir();
+
+    // 尝试找同名图片
+    QString baseName = fileInfo.completeBaseName(); // 不带扩展名
+    QString coverPath1 = dir.filePath(baseName + ".jpg");  // MySong.jpg
+    QString coverPath2 = dir.filePath(baseName + ".png");   // 或者固定 cover.jpg
+
+    if (QFile::exists(coverPath1)) {
+        cover.load(coverPath1);
+    } else if (QFile::exists(coverPath2)) {
+        cover.load(coverPath2);
+    } else {
+        // 没找到封面，使用默认圆盘
+        cover.load(":/disc.png");
+    }
+
+    m_discWidget->setPixmap(cover);
 }
 
 void MainWindow::on_prevBtn_clicked()
