@@ -71,7 +71,8 @@ private:
     void updateDiscState();
     // 更新唱片图片
     void updateDiscCover(const QString &musicPath);
-
+    // 获取圆形唱片封面
+    QPixmap getCircularPixmap(const QPixmap &src);
 
 private:   
     Ui::MainWindow *ui;

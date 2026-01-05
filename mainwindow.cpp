@@ -4,6 +4,8 @@
 #include <QPixmap>
 #include <QPalette>
 #include <QBrush>
+#include <QPainter>
+#include <QPainterPath>
 #include <QMessageBox>
 #include <QRandomGenerator>
 
@@ -389,18 +391,35 @@ void MainWindow::updateDiscCover(const QString &musicPath)
     // 尝试找同名图片
     QString baseName = fileInfo.completeBaseName(); // 不带扩展名
     QString coverPath1 = dir.filePath(baseName + ".jpg");  // MySong.jpg
-    QString coverPath2 = dir.filePath(baseName + ".png");   // 或者固定 cover.jpg
+    QString coverPath2 = dir.filePath("cover.jpg");        // 或者固定 cover.jpg
 
     if (QFile::exists(coverPath1)) {
         cover.load(coverPath1);
+        cover = getCircularPixmap(cover);
     } else if (QFile::exists(coverPath2)) {
         cover.load(coverPath2);
+        cover = getCircularPixmap(cover);
     } else {
         // 没找到封面，使用默认圆盘
         cover.load(":/disc.png");
     }
 
     m_discWidget->setPixmap(cover);
+}
+
+QPixmap MainWindow::getCircularPixmap(const QPixmap &src)
+{
+    int size = qMin(src.width(), src.height()); // 取最小边
+    QPixmap dest(size, size);
+    dest.fill(Qt::transparent); // 背景透明
+
+    QPainter painter(&dest);
+    painter.setRenderHint(QPainter::Antialiasing);
+    QPainterPath path;
+    path.addEllipse(0, 0, size, size); // 圆形路径
+    painter.setClipPath(path);         // 裁剪
+    painter.drawPixmap(0, 0, src);     // 绘制原图
+    return dest;
 }
 
 void MainWindow::on_prevBtn_clicked()
