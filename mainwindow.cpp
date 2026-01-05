@@ -87,6 +87,14 @@ MainWindow::MainWindow(QWidget *parent)
     // 关联随机播放按钮
     connect(ui->modeBtn, &QPushButton::clicked, this, &MainWindow::onModeBtnClicked);
 
+    // 每次播放歌曲时设置进度条
+    connect(m_player, &QMediaPlayer::durationChanged, this, &MainWindow::onDurationChanged);
+
+    // 歌曲播放时修改进度值
+    connect(m_player, &QMediaPlayer::positionChanged, this, &MainWindow::onPositionChanged);
+
+    // 拖动进度
+    connect(ui->progressSlider, &QSlider::sliderReleased, this, &MainWindow::onSliderReleased);
 }
 
 MainWindow::~MainWindow()
@@ -290,6 +298,23 @@ void MainWindow::playPrev()
         int prevIndex = m_playHistory[m_historyPos];
         playMusicByIndex(prevIndex);
     }
+}
+
+void MainWindow::onDurationChanged(qint64 duration)
+{
+    ui->progressSlider->setRange(0, duration);
+}
+
+void MainWindow::onPositionChanged(qint64 position)
+{
+    if (!ui->progressSlider->isSliderDown())
+        ui->progressSlider->setValue(position);
+}
+
+void MainWindow::onSliderReleased()
+{
+    // 播放对应进度条位置
+    m_player->setPosition(ui->progressSlider->value());
 }
 
 void MainWindow::on_prevBtn_clicked()

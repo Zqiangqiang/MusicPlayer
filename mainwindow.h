@@ -60,7 +60,12 @@ private:
     void recordHistory(int index);
     // 播放上一首（shuffle/order）
     void playPrev();
-
+    // 设置进度条
+    void onDurationChanged(qint64 duration);
+    // 修改进度条进度
+    void onPositionChanged(qint64 position);
+    // 拖动进度条处理
+    void onSliderReleased();
 
 private:   
     Ui::MainWindow *ui;
