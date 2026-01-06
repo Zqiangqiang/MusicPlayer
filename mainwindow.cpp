@@ -7,9 +7,6 @@
 #include <QPainter>
 #include <QUrl>
 #include <QUrlQuery>
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QJsonArray>
 #include <QPainterPath>
 #include <QMessageBox>
 #include <QRandomGenerator>
@@ -28,6 +25,10 @@ MainWindow::MainWindow(QWidget *parent)
     m_lyrics = new LyricsManager(this);
     // 歌词加载好时显示歌词
     connect(m_lyrics, &LyricsManager::lyricsReady, this, &MainWindow::onLyricsReady);
+    // 初始化歌词对象
+    m_lyricsView = new Lyrics(ui->lyricsEdit, this);
+    // 初始化网络请求管理对象
+    m_networkManager = new QNetworkAccessManager(this);
 
     // 初始化背景
     setBackGround(":/background.png");
@@ -86,15 +87,10 @@ MainWindow::MainWindow(QWidget *parent)
             startRect = QRect(width(), 0, w, h);
             endRect   = QRect(width() - w, 0, w, h);
             ui->rightPanel->show();
-            // 滑出时模糊歌词
-            setLyricsBlur(true);
         } else {
             // 滑出到右侧
             startRect = QRect(width() - w, 0, w, h);
             endRect   = QRect(width(), 0, w, h);
-            // 收回时恢复歌词清晰
-            setLyricsBlur(false);
-            ui->rightPanel->show();
         }
 
         m_listAnim->stop();
@@ -160,7 +156,7 @@ MainWindow::MainWindow(QWidget *parent)
     // 初始化唱片
     m_discWidget = new RotatingDiscWidget(this);
     m_discWidget->setFixedSize(240, 240); // 圆盘大小
-    m_discWidget->move(50, 80);           // 放置位置
+    m_discWidget->move(20, 50);           // 放置位置
     m_discWidget->setPixmap(QPixmap(":/disc.png"));
 
     m_discAnimation = new QPropertyAnimation(m_discWidget, "angle", this);
@@ -173,10 +169,13 @@ MainWindow::MainWindow(QWidget *parent)
     // 关联唱片旋转
     connect(m_player, &QMediaPlayer::playbackStateChanged, this, &MainWindow::updateDiscState);
 
-    // 优化歌词显示效果
-    // ui->lyricsEdit->setReadOnly(true);
-    // ui->lyricsEdit->setFrameShape(QFrame::NoFrame);
-    // ui->lyricsEdit->setStyleSheet("background: transparent; color: white;");
+    // 初始化歌词显示窗
+    ui->lyricsEdit->setReadOnly(true);
+    ui->lyricsEdit->setFont(QFont("Arial", 20));
+    ui->lyricsEdit->setFrameShape(QFrame::NoFrame);
+    ui->lyricsEdit->setStyleSheet("background: transparent; color: white;");
+    ui->lyricsEdit->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);   // 隐藏竖向滚动条
+    ui->lyricsEdit->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff); // 隐藏横向滚动条
 
 }
 
@@ -332,8 +331,11 @@ void MainWindow::playMusicByIndex(int index)
 
     // 加载歌词
     QString currentTitle = QFileInfo(m_currentMusicPath).baseName();
-    QString currentArtist = ""; // 如果你有获取歌手信息的逻辑就填
+    // 获取歌手(可选项)
+    QString currentArtist = "周杰伦";
     m_lyrics->requestLyrics(m_currentMusicPath, currentTitle, currentArtist);
+    // 更新歌词
+    m_lyricsView->setPreludeTip("歌词即将开始...");
 }
 
 void MainWindow::updatePlayingItemState(int newIndex)
@@ -433,6 +435,9 @@ void MainWindow::onPositionChanged(qint64 position)
 {
     if (!ui->progressSlider->isSliderDown())
         ui->progressSlider->setValue(position);
+
+    if (m_lyricsView)
+        m_lyricsView->updatePosition(position);
 }
 
 void MainWindow::onSliderReleased()
@@ -466,15 +471,47 @@ void MainWindow::updateDiscCover(const QString &musicPath)
     if (QFile::exists(coverPath1)) {
         cover.load(coverPath1);
         cover = getCircularPixmap(cover);
+        m_discWidget->setPixmap(cover);
     } else if (QFile::exists(coverPath2)) {
         cover.load(coverPath2);
         cover = getCircularPixmap(cover);
+        m_discWidget->setPixmap(cover);
     } else {
-        // 没找到封面，使用默认圆盘
+        // 本地没找到，使用默认圆盘先占位
         cover.load(":/disc.png");
-    }
+        m_discWidget->setPixmap(cover);
 
-    m_discWidget->setPixmap(cover);
+        // 尝试在线获取封面
+        QString title = QFileInfo(musicPath).completeBaseName(); // 歌曲名
+        QString artist = "周杰伦"; // 可改成动态
+        QString urlStr = QString("https://api.lrc.cx/cover?title=%1&artist=%2")
+                             .arg(QUrl::toPercentEncoding(title))
+                             .arg(QUrl::toPercentEncoding(artist));
+
+        QNetworkRequest requestCover(QUrl(urlStr, QUrl::StrictMode));
+        QNetworkReply *reply = m_networkManager->get(requestCover);
+
+        connect(reply, &QNetworkReply::finished, this, [this, reply, dir, baseName]() {
+            if (reply->error() == QNetworkReply::NoError) {
+                QByteArray data = reply->readAll();
+                QPixmap pix;
+                if (pix.loadFromData(data)) {
+                    pix = getCircularPixmap(pix);
+                    m_discWidget->setPixmap(pix);
+                    // 保存到本地目录，文件名用歌曲名，后缀 jpg
+                    QString savePath = dir.filePath(baseName + ".jpg");
+                    if (!pix.save(savePath, "JPG")) {
+                        qDebug() << "封面保存失败:" << savePath;
+                    } else {
+                        qDebug() << "封面已保存到:" << savePath;
+                    }
+                } else {
+                    qDebug() << "封面下载失败:" << reply->errorString();
+                }
+            }
+            reply->deleteLater();
+        });
+    }
 }
 
 QPixmap MainWindow::getCircularPixmap(const QPixmap &src)
@@ -494,21 +531,7 @@ QPixmap MainWindow::getCircularPixmap(const QPixmap &src)
 
 void MainWindow::onLyricsReady(const QString &, const QString &lrc)
 {
-    //ui->lyricsEdit->setPlainText(lrc);
-}
-
-void MainWindow::setLyricsBlur(bool blur)
-{
-    // if (blur) {
-    //     if (!m_blurEffect) {
-    //         m_blurEffect = new QGraphicsBlurEffect(this);
-    //         m_blurEffect->setBlurRadius(10); // 模糊半径，可调
-    //     }
-    //     ui->lyricsEdit->setGraphicsEffect(m_blurEffect);
-    //     ui->lyricsEdit->setStyleSheet("background-color: rgba(0,0,0,50%);");
-    // } else {
-    //     ui->lyricsEdit->setGraphicsEffect(nullptr);
-    // }
+    m_lyricsView->setLyrics(lrc);
 }
 
 void MainWindow::on_prevBtn_clicked()

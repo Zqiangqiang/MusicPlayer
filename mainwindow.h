@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QPushButton>
+#include <QPlainTextEdit>
 #include <QMediaPlayer>
 #include <QAudioOutput>
 #include <QDir>
@@ -17,6 +18,8 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QGraphicsBlurEffect>
+#include <QTimer>
+#include "lyrics.h"
 #include "rotatingdiscwidget.h"
 #include "lyricsmanager.h"
 
@@ -89,8 +92,7 @@ private:
     QPixmap getCircularPixmap(const QPixmap &src);
     // 歌词准备就绪
     void onLyricsReady(const QString &, const QString &lrc);
-    // 模糊显示歌词
-    void setLyricsBlur(bool blur);
+
 
 private:   
     Ui::MainWindow *ui;
@@ -101,7 +103,7 @@ private:
     QPropertyAnimation *m_listAnim;
     bool m_listVisible = false;
     // 播放目录
-    QString m_musicDir;
+    QString m_musicDir = "/Users/xiang/Desktop/music";
     // 播放歌曲路径
     QStringList m_musicList;
     int m_currentIndex = -1;
@@ -116,7 +118,9 @@ private:
     QPropertyAnimation *m_discAnimation;
     // 歌词管理对象
     LyricsManager *m_lyrics;
-    // 模糊控件
-    QGraphicsBlurEffect *m_blurEffect = nullptr;
+    // 当前歌曲的解析歌词
+    Lyrics *m_lyricsView;
+    // 网络请求管理对象
+    QNetworkAccessManager *m_networkManager;
 };
 #endif // MAINWINDOW_H

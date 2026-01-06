@@ -4,9 +4,15 @@
 #include <QCryptographicHash>
 #include <QDir>
 #include <QFile>
+#include <QDebug>
 #include <QTextStream>
 #include <QNetworkReply>
 #include <QUrlQuery>
+#include <QJsonParseError>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
+#include <QRegularExpression>
 
 LyricsManager::LyricsManager(QObject *parent)
     : QObject(parent)
@@ -67,7 +73,7 @@ void LyricsManager::requestLyrics(const QString &musicPath, const QString &title
     }
 
     // 2️⃣ 构造请求（示例，用你之前的 API）
-    QUrl url("https://tools.rangotec.com/api/anon/lrc");
+    QUrl url("https://api.lrc.cx/lyrics");
     QUrlQuery query;
     query.addQueryItem("title", title);
     query.addQueryItem("artist", artist);
@@ -86,14 +92,25 @@ void LyricsManager::requestLyrics(const QString &musicPath, const QString &title
             return;
         }
 
-        QString lrcText = reply->readAll();
+        // 新接口：直接返回 LRC 文本
+        QString lrcText = QString::fromUtf8(reply->readAll()).trimmed();
 
-        if (lrcText.isEmpty()) {
+        // 基本合法性判断
+        if (lrcText.isEmpty() || !lrcText.contains('[')) {
             emit lyricsFailed(musicPath);
             return;
         }
 
+        // 非法LRC数据不保存
+        if (!lrcText.contains(QRegularExpression(R"(\[\d+:\d+\.\d+\])"))) {
+            emit lyricsFailed(musicPath);
+            return;
+        }
+
+        // 保存到缓存
         saveToCache(musicPath, lrcText);
+
+        // 发射信号
         emit lyricsReady(musicPath, lrcText);
     });
 }
