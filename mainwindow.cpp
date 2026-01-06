@@ -64,6 +64,8 @@ MainWindow::MainWindow(QWidget *parent)
     // 设置音乐列表背景透明
     ui->musicList->setAttribute(Qt::WA_TranslucentBackground);
     ui->musicList->setStyleSheet("background: transparent;");
+    ui->musicList->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    ui->musicList->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
     // 初始化动画
     m_listAnim = new QPropertyAnimation(ui->rightPanel, "geometry");
@@ -176,7 +178,6 @@ MainWindow::MainWindow(QWidget *parent)
     ui->lyricsEdit->setStyleSheet("background: transparent; color: white;");
     ui->lyricsEdit->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);   // 隐藏竖向滚动条
     ui->lyricsEdit->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff); // 隐藏横向滚动条
-
 }
 
 MainWindow::~MainWindow()
@@ -330,9 +331,11 @@ void MainWindow::playMusicByIndex(int index)
     updateDiscCover(m_currentMusicPath);
 
     // 加载歌词
-    QString currentTitle = QFileInfo(m_currentMusicPath).baseName();
+    QString fileName = QFileInfo(m_currentMusicPath).completeBaseName();
+    QStringList parts = fileName.split('_');
     // 获取歌手(可选项)
-    QString currentArtist = "周杰伦";
+    QString currentTitle = parts[0];
+    QString currentArtist = parts[1];
     m_lyrics->requestLyrics(m_currentMusicPath, currentTitle, currentArtist);
     // 更新歌词
     m_lyricsView->setPreludeTip("歌词即将开始...");
@@ -482,11 +485,10 @@ void MainWindow::updateDiscCover(const QString &musicPath)
         m_discWidget->setPixmap(cover);
 
         // 尝试在线获取封面
-        QString title = QFileInfo(musicPath).completeBaseName(); // 歌曲名
-        QString artist = "周杰伦"; // 可改成动态
+        QString title = QFileInfo(musicPath).completeBaseName().split("_")[0];
+        QString artist = QFileInfo(musicPath).completeBaseName().split("_")[1];
         QString urlStr = QString("https://api.lrc.cx/cover?title=%1&artist=%2")
-                             .arg(QUrl::toPercentEncoding(title))
-                             .arg(QUrl::toPercentEncoding(artist));
+                            .arg(QUrl::toPercentEncoding(title)).arg(QUrl::toPercentEncoding(artist));
 
         QNetworkRequest requestCover(QUrl(urlStr, QUrl::StrictMode));
         QNetworkReply *reply = m_networkManager->get(requestCover);

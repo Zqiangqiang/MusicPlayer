@@ -103,7 +103,7 @@ private:
     QPropertyAnimation *m_listAnim;
     bool m_listVisible = false;
     // 播放目录
-    QString m_musicDir = "/Users/xiang/Desktop/music";
+    QString m_musicDir;
     // 播放歌曲路径
     QStringList m_musicList;
     int m_currentIndex = -1;
