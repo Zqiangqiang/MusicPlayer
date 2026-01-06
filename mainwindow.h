@@ -9,9 +9,16 @@
 #include <QFileDialog>
 #include <QFile>
 #include <QFileInfo>
+#include <QDebug>
+#include <QStandardPaths>
+#include <QCryptographicHash>
 #include <QPropertyAnimation>
 #include <QListWidget>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QGraphicsBlurEffect>
 #include "rotatingdiscwidget.h"
+#include "lyricsmanager.h"
 
 QT_BEGIN_NAMESPACE
 enum class PlayMode {
@@ -80,6 +87,10 @@ private:
     void updateDiscCover(const QString &musicPath);
     // 获取圆形唱片封面
     QPixmap getCircularPixmap(const QPixmap &src);
+    // 歌词准备就绪
+    void onLyricsReady(const QString &, const QString &lrc);
+    // 模糊显示歌词
+    void setLyricsBlur(bool blur);
 
 private:   
     Ui::MainWindow *ui;
@@ -103,5 +114,9 @@ private:
     // 旋转唱片
     RotatingDiscWidget *m_discWidget;
     QPropertyAnimation *m_discAnimation;
+    // 歌词管理对象
+    LyricsManager *m_lyrics;
+    // 模糊控件
+    QGraphicsBlurEffect *m_blurEffect = nullptr;
 };
 #endif // MAINWINDOW_H

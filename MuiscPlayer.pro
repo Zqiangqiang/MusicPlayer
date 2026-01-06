@@ -1,6 +1,6 @@
 QT       += core gui
 
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets multimedia
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets multimedia network
 
 CONFIG += c++17
 
@@ -9,11 +9,13 @@ CONFIG += c++17
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    lyricsmanager.cpp \
     main.cpp \
     mainwindow.cpp \
     rotatingdiscwidget.cpp
 
 HEADERS += \
+    lyricsmanager.h \
     mainwindow.h \
     rotatingdiscwidget.h
 

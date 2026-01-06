@@ -5,6 +5,11 @@
 #include <QPalette>
 #include <QBrush>
 #include <QPainter>
+#include <QUrl>
+#include <QUrlQuery>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
 #include <QPainterPath>
 #include <QMessageBox>
 #include <QRandomGenerator>
@@ -16,9 +21,14 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     // 默认不显示progressTipLabel标签
     ui->progressTipLabel->hide();
-
     setWindowTitle("MusicPlayer");
     setFixedSize(800, 600);
+
+    // 初始化网络管理对象
+    m_lyrics = new LyricsManager(this);
+    // 歌词加载好时显示歌词
+    connect(m_lyrics, &LyricsManager::lyricsReady, this, &MainWindow::onLyricsReady);
+
     // 初始化背景
     setBackGround(":/background.png");
 
@@ -76,10 +86,15 @@ MainWindow::MainWindow(QWidget *parent)
             startRect = QRect(width(), 0, w, h);
             endRect   = QRect(width() - w, 0, w, h);
             ui->rightPanel->show();
+            // 滑出时模糊歌词
+            setLyricsBlur(true);
         } else {
             // 滑出到右侧
             startRect = QRect(width() - w, 0, w, h);
             endRect   = QRect(width(), 0, w, h);
+            // 收回时恢复歌词清晰
+            setLyricsBlur(false);
+            ui->rightPanel->show();
         }
 
         m_listAnim->stop();
@@ -93,7 +108,7 @@ MainWindow::MainWindow(QWidget *parent)
     // 关联歌曲列表中表项
     connect(ui->musicList, &QListWidget::itemClicked, this, &MainWindow::onMusicItemClicked);
 
-    // 当前歌曲播放结束自动播放下一曲（默认顺序播放）
+    // 当前歌曲播放结束自动播放下一曲
     connect(m_player, &QMediaPlayer::mediaStatusChanged, this, [this](QMediaPlayer::MediaStatus status) {
         if (status == QMediaPlayer::EndOfMedia) {
             playNext();
@@ -136,7 +151,7 @@ MainWindow::MainWindow(QWidget *parent)
         ui->progressTipLabel->move(x, y);
     });
 
-    // 松开 slider
+    // 松开进度条slider
     connect(ui->progressSlider, &QSlider::sliderReleased, this, [=](){
         ui->progressTipLabel->hide();
         m_player->setPosition(ui->progressSlider->value());
@@ -157,6 +172,11 @@ MainWindow::MainWindow(QWidget *parent)
 
     // 关联唱片旋转
     connect(m_player, &QMediaPlayer::playbackStateChanged, this, &MainWindow::updateDiscState);
+
+    // 优化歌词显示效果
+    // ui->lyricsEdit->setReadOnly(true);
+    // ui->lyricsEdit->setFrameShape(QFrame::NoFrame);
+    // ui->lyricsEdit->setStyleSheet("background: transparent; color: white;");
 
 }
 
@@ -309,6 +329,11 @@ void MainWindow::playMusicByIndex(int index)
 
     // 切换唱片图片
     updateDiscCover(m_currentMusicPath);
+
+    // 加载歌词
+    QString currentTitle = QFileInfo(m_currentMusicPath).baseName();
+    QString currentArtist = ""; // 如果你有获取歌手信息的逻辑就填
+    m_lyrics->requestLyrics(m_currentMusicPath, currentTitle, currentArtist);
 }
 
 void MainWindow::updatePlayingItemState(int newIndex)
@@ -465,6 +490,25 @@ QPixmap MainWindow::getCircularPixmap(const QPixmap &src)
     painter.setClipPath(path);         // 裁剪
     painter.drawPixmap(0, 0, src);     // 绘制原图
     return dest;
+}
+
+void MainWindow::onLyricsReady(const QString &, const QString &lrc)
+{
+    //ui->lyricsEdit->setPlainText(lrc);
+}
+
+void MainWindow::setLyricsBlur(bool blur)
+{
+    // if (blur) {
+    //     if (!m_blurEffect) {
+    //         m_blurEffect = new QGraphicsBlurEffect(this);
+    //         m_blurEffect->setBlurRadius(10); // 模糊半径，可调
+    //     }
+    //     ui->lyricsEdit->setGraphicsEffect(m_blurEffect);
+    //     ui->lyricsEdit->setStyleSheet("background-color: rgba(0,0,0,50%);");
+    // } else {
+    //     ui->lyricsEdit->setGraphicsEffect(nullptr);
+    // }
 }
 
 void MainWindow::on_prevBtn_clicked()
