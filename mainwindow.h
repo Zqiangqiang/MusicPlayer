@@ -93,7 +93,6 @@ private:
     // 歌词准备就绪
     void onLyricsReady(const QString &, const QString &lrc);
 
-
 private:   
     Ui::MainWindow *ui;
     // 音乐播放部件
@@ -103,7 +102,7 @@ private:
     QPropertyAnimation *m_listAnim;
     bool m_listVisible = false;
     // 播放目录
-    QString m_musicDir;
+    QString m_musicDir = "/Users/xiang/Desktop/music";
     // 播放歌曲路径
     QStringList m_musicList;
     int m_currentIndex = -1;

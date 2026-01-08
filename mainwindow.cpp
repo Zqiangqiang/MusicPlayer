@@ -39,6 +39,7 @@ MainWindow::MainWindow(QWidget *parent)
     QLabel *statusLabel = new QLabel(this);
     statusLabel->setText("Author:xiang");
     this->statusBar()->addPermanentWidget(statusLabel);
+
     // 处理菜单栏操作
     connect(ui->actionopen_Dir, &QAction::triggered, this, &MainWindow::onActionOpenDirClicked);
     connect(ui->actionOpen_file, &QAction::triggered, this, &MainWindow::onActionOpenFileClicked);
@@ -77,6 +78,7 @@ MainWindow::MainWindow(QWidget *parent)
         if (m_musicDir.isEmpty()) {
             onActionOpenDirClicked();
         }
+        // 加载目录下歌曲（需要一定时间）
         loadAppointMusicDir(m_musicDir);
 
         QRect startRect, endRect;
@@ -89,6 +91,8 @@ MainWindow::MainWindow(QWidget *parent)
             startRect = QRect(width(), 0, w, h);
             endRect   = QRect(width() - w, 0, w, h);
             ui->rightPanel->show();
+            // 更新当前播放歌曲状态
+            updatePlayingItemState(m_currentIndex);
         } else {
             // 滑出到右侧
             startRect = QRect(width() - w, 0, w, h);
@@ -323,29 +327,40 @@ void MainWindow::playMusicByIndex(int index)
     m_player->setSource(QUrl::fromLocalFile(m_currentMusicPath));
     m_player->play();
 
+    // 更新播放列表中的歌曲状态
     updatePlayingItemState(index);
-    recordHistory(index);       // 记录播放历史
+    // 记录播放历史(用于shuffle模式下的上一首)
+    recordHistory(index);
     ui->playPauseBtn->setIcon(QIcon(":/play.png"));
-
     // 切换唱片图片
     updateDiscCover(m_currentMusicPath);
-
     // 加载歌词
     QString fileName = QFileInfo(m_currentMusicPath).completeBaseName();
     QStringList parts = fileName.split('_');
-    // 获取歌手(可选项)
+    // 获取歌名和歌手名
     QString currentTitle = parts[0];
     QString currentArtist = parts[1];
+    // 获取对应歌手歌曲歌词
     m_lyrics->requestLyrics(m_currentMusicPath, currentTitle, currentArtist);
     // 更新歌词
     m_lyricsView->setPreludeTip("歌词即将开始...");
+    // 更新状态栏
+    this->statusBar()->showMessage("playing: " + currentTitle);
 }
 
 void MainWindow::updatePlayingItemState(int newIndex)
 {
+    int count = ui->musicList->count();
+    if (count == 0)
+        return;
+
+    if (newIndex < 0 || newIndex >= count)
+        return;
+
     // 清除旧状态
     for (int i = 0; i < ui->musicList->count(); ++i) {
         QListWidgetItem *item = ui->musicList->item(i);
+        if (!item) continue;
         item->setForeground(Qt::white);
         QFont font = item->font();  // 保留原来的字体大小
         font.setBold(false);        // 取消粗体
@@ -355,13 +370,13 @@ void MainWindow::updatePlayingItemState(int newIndex)
 
     // 设置当前播放项
     QListWidgetItem *currentItem = ui->musicList->item(newIndex);
+    if (!currentItem) return;
+
     QFont font = currentItem->font();
     font.setBold(true); // 粗体
     currentItem->setFont(font);
-
     currentItem->setForeground(QColor(0, 200, 255)); // 播放中颜色
     currentItem->setIcon(QIcon(":/playing.png"));
-
     ui->musicList->setCurrentRow(newIndex);
 }
 
@@ -399,7 +414,7 @@ void MainWindow::playNext()
 
 void MainWindow::recordHistory(int index)
 {
-    // 如果从中间跳转，截断后面的历史
+    // 如果从中间跳转，截断后面的历史(浏览器调用栈模型)
     if (m_historyPos + 1 < m_playHistory.size()) {
         m_playHistory.resize(m_historyPos + 1);
     }
