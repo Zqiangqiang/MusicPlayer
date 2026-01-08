@@ -11,6 +11,7 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QDebug>
+#include <QKeyEvent>
 #include <QStandardPaths>
 #include <QCryptographicHash>
 #include <QPropertyAnimation>
@@ -50,6 +51,10 @@ public slots:
 private slots:
     void on_prevBtn_clicked();
     void on_nextBtn_clicked();
+
+protected:
+    // override 键盘处理事件
+    void keyPressEvent(QKeyEvent *event) override;
 
 private:
     // 设置背景
@@ -102,7 +107,7 @@ private:
     QPropertyAnimation *m_listAnim;
     bool m_listVisible = false;
     // 播放目录
-    QString m_musicDir = "/Users/xiang/Desktop/music";
+    QString m_musicDir;
     // 播放歌曲路径
     QStringList m_musicList;
     int m_currentIndex = -1;

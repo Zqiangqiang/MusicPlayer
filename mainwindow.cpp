@@ -16,6 +16,8 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    // 设置焦点
+    this->setFocusPolicy(Qt::StrongFocus);
     // 默认不显示progressTipLabel标签
     ui->progressTipLabel->hide();
     setWindowTitle("MusicPlayer");
@@ -285,6 +287,7 @@ void MainWindow::onActionOpenFileClicked()
 void MainWindow::onActionCloseDirClicked()
 {
     m_musicDir = nullptr;
+    ui->musicList->clear();
 }
 
 void MainWindow::loadAppointMusicDir(const QString &dirPath)
@@ -559,3 +562,22 @@ void MainWindow::on_nextBtn_clicked()
     playNext();
 }
 
+void MainWindow::keyPressEvent(QKeyEvent *event)
+{
+    switch (event->key()) {
+    case Qt::Key_Space:
+        handlePlaySlot();   // 空格：播放/暂停
+        break;
+    case Qt::Key_Left:
+        playPrev();          // ← 上一首
+        break;
+    case Qt::Key_Right:
+        playNext();          // → 下一首
+        break;
+    default:
+        QMainWindow::keyPressEvent(event); // 交给父类
+        return;
+    }
+
+    event->accept();
+}
