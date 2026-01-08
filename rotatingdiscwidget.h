@@ -19,6 +19,7 @@ public:
     void setAngle(qreal angle);
 
 private:
+    // override绘制事件
     void paintEvent(QPaintEvent *event) override;
 
     QPixmap m_pixmap;

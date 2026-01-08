@@ -48,15 +48,13 @@ MainWindow::MainWindow(QWidget *parent)
     ui->actionClose_dir->setShortcut(QKeySequence::Close);
 
     // Qt6 必须显式创建音频输出，否则没有声音
+    // player的时间单位是 ms
     m_player = new QMediaPlayer(this);
     m_audioOutput = new QAudioOutput(this);
     m_player->setAudioOutput(m_audioOutput);
 
     // 设置音量（0.0 ~ 1.0）
     m_audioOutput->setVolume(1.0);
-    // 设置音频源
-    //m_player->setSource(QUrl::fromLocalFile("/Users/xiang/Desktop/music/Fa_Ru_Xue.mp3"));
-
     // 关联播放按钮
     connect(ui->playPauseBtn, &QPushButton::clicked, this, &MainWindow::handlePlaySlot);
 
