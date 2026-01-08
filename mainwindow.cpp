@@ -237,9 +237,9 @@ void MainWindow::setBackGround(const QString &filename)
 
 void MainWindow::setButtonStyle(QPushButton *btn,const QString& iconPath)
 {
-    btn->setFixedSize(80, 80);
+    btn->setFixedSize(60, 60);
     btn->setIcon(QIcon(iconPath));
-    btn->setIconSize(QSize(64, 64));
+    btn->setIconSize(QSize(55, 55));
     btn->setStyleSheet(
         "QPushButton {"
         " background-color: transparent;"
