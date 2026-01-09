@@ -182,6 +182,10 @@ MainWindow::MainWindow(QWidget *parent)
     ui->lyricsEdit->setStyleSheet("background: transparent; color: white;");
     ui->lyricsEdit->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);   // 隐藏竖向滚动条
     ui->lyricsEdit->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff); // 隐藏横向滚动条
+
+    // TODO: 新增支持拖动文件夹/文件到播放器播放
+    // 修复closeDir未彻底清除的bug，同时支持删除缓存设置。
+
 }
 
 MainWindow::~MainWindow()
