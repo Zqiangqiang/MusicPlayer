@@ -24,6 +24,7 @@
 #include "lyrics.h"
 #include "rotatingdiscwidget.h"
 #include "lyricsmanager.h"
+#include "spectrumwidget.h"
 
 QT_BEGIN_NAMESPACE
 enum class PlayMode {
@@ -132,5 +133,7 @@ private:
     Lyrics *m_lyricsView;
     // 网络请求管理对象
     QNetworkAccessManager *m_networkManager;
+    // fake 频谱图
+    SpectrumWidget *m_spectrum;
 };
 #endif // MAINWINDOW_H

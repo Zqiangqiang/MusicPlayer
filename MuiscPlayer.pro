@@ -13,13 +13,15 @@ SOURCES += \
     lyricsmanager.cpp \
     main.cpp \
     mainwindow.cpp \
-    rotatingdiscwidget.cpp
+    rotatingdiscwidget.cpp \
+    spectrumwidget.cpp
 
 HEADERS += \
     lyrics.h \
     lyricsmanager.h \
     mainwindow.h \
-    rotatingdiscwidget.h
+    rotatingdiscwidget.h \
+    spectrumwidget.h
 
 FORMS += \
     mainwindow.ui

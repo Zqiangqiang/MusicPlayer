@@ -133,11 +133,15 @@ MainWindow::MainWindow(QWidget *parent)
 
     // 开始拖动进度条时显示标签
     connect(ui->progressSlider, &QSlider::sliderPressed, this, [=](){
+        m_spectrum->setVisible(false);
         ui->progressTipLabel->show();
     });
 
     // 拖动中
     connect(ui->progressSlider, &QSlider::sliderMoved, this, [=](int value){
+        // 隐藏频谱
+        m_spectrum->setVisible(false);
+
         // 转换为 mm:ss
         int seconds = value / 1000;
         int minutes = seconds / 60;
@@ -159,6 +163,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->progressSlider, &QSlider::sliderReleased, this, [=](){
         ui->progressTipLabel->hide();
         m_player->setPosition(ui->progressSlider->value());
+        m_spectrum->setVisible(true);
     });
 
     // 初始化唱片
@@ -185,8 +190,18 @@ MainWindow::MainWindow(QWidget *parent)
     ui->lyricsEdit->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);   // 隐藏竖向滚动条
     ui->lyricsEdit->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff); // 隐藏横向滚动条
 
-    // TODO: 新增支持拖动文件夹/文件到播放器播放
-    // 修复closeDir未彻底清除的bug，同时支持删除缓存设置。
+    // TODO: 同时支持删除缓存设置。
+
+    // 初始化频谱图
+    m_spectrum = new SpectrumWidget(this);
+    m_spectrum->setGeometry(10, 350, 450, 50); // 自行微调
+    m_spectrum->setBarCount(40);
+
+    // 关联播放器状态
+    connect(m_player, &QMediaPlayer::playbackStateChanged, m_spectrum, &SpectrumWidget::onPlaybackStateChanged);
+
+    // 音量同步（现在用 QAudioOutput）
+    connect(m_audioOutput, &QAudioOutput::volumeChanged, m_spectrum, &SpectrumWidget::setVolume);
 
 }
 
