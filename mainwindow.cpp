@@ -41,11 +41,11 @@ MainWindow::MainWindow(QWidget *parent)
     initButton();
     // 初始化状态栏
     QLabel *statusLabel = new QLabel(this);
-    statusLabel->setText("Author:xiang");
+    statusLabel->setText("Lyric from Internet");
     this->statusBar()->addPermanentWidget(statusLabel);
 
     // 处理菜单栏操作
-    connect(ui->actionopen_Dir, &QAction::triggered, this, &MainWindow::onActionOpenDirClicked);
+    connect(ui->actionopen_dir, &QAction::triggered, this, &MainWindow::onActionOpenDirClicked);
     connect(ui->actionOpen_file, &QAction::triggered, this, &MainWindow::onActionOpenFileClicked);
     ui->actionOpen_file->setShortcut(QKeySequence::Open);
     connect(ui->actionClose_dir, &QAction::triggered, this, &MainWindow::onActionCloseDirClicked);
@@ -133,7 +133,6 @@ MainWindow::MainWindow(QWidget *parent)
 
     // 开始拖动进度条时显示标签
     connect(ui->progressSlider, &QSlider::sliderPressed, this, [=](){
-        m_spectrum->setVisible(false);
         ui->progressTipLabel->show();
     });
 
@@ -190,8 +189,6 @@ MainWindow::MainWindow(QWidget *parent)
     ui->lyricsEdit->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);   // 隐藏竖向滚动条
     ui->lyricsEdit->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff); // 隐藏横向滚动条
 
-    // TODO: 同时支持删除缓存设置。
-
     // 初始化频谱图
     m_spectrum = new SpectrumWidget(this);
     m_spectrum->setGeometry(10, 350, 450, 50); // 自行微调
@@ -205,6 +202,38 @@ MainWindow::MainWindow(QWidget *parent)
                 m_spectrum->setPlaying(state == QMediaPlayer::PlayingState);
     });
 
+    // 删除缓存（歌词）
+    ui->actionDelete_Cache_2->setShortcut(QKeySequence::Delete);
+    connect(ui->actionDelete_Cache_2, &QAction::triggered, this, [=](){
+        // 获取缓存目录
+        QString baseDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+        QDir lyricsDir(baseDir + "/lyrics");
+
+        if (!lyricsDir.exists()) {
+            QMessageBox::information(this, "Information", "Don't find lyrics caches");
+            return;
+        }
+
+        // 获取目录下所有文件
+        QFileInfoList fileList = lyricsDir.entryInfoList(QDir::Files | QDir::NoDotAndDotDot);
+        int count = 0;
+
+        for (const QFileInfo &fileInfo : fileList) {
+            QFile file(fileInfo.absoluteFilePath());
+            if (file.remove()) {
+                ++count;
+            } else {
+                qDebug() << "删除失败:" << file.fileName();
+            }
+        }
+
+        QMessageBox::information(this, "Information", QString("Deleted %1 lyrics caches。").arg(count));
+    });
+
+    // About me
+    connect(ui->actionAbout, &QAction::triggered, this, [=](){
+        QMessageBox::information(this, "About me", "Author: xiangzhang\n Email: nameqiangqiang@gamil.com\n Welcome to contact me.");
+    });
 }
 
 MainWindow::~MainWindow()
@@ -295,6 +324,7 @@ void MainWindow::onActionOpenDirClicked()
 
     if (!dir.isEmpty()) {
         m_musicDir = dir;
+        ui->musicListBtn->click();
     }
 }
 
@@ -303,6 +333,7 @@ void MainWindow::onActionOpenFileClicked()
     QString filePath = QFileDialog::getOpenFileName(this, "Select File", "./", "Audio (*.mp3 *.wav *.M4a)");
     if (!filePath.isEmpty())
         loadAppointMusicFile(filePath);
+    playMusicByIndex(m_currentIndex);
 }
 
 void MainWindow::onActionCloseDirClicked()
@@ -371,7 +402,6 @@ void MainWindow::loadAppointMusicFile(const QString &filePath)
 
     QFileInfo info =  QFileInfo(filePath);
     m_musicList.append(info.absoluteFilePath());
-    ui->musicList->addItem(info.baseName());
     m_currentIndex = 0;
 }
 

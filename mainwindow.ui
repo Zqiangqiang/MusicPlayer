@@ -152,14 +152,28 @@
     <property name="title">
      <string>File</string>
     </property>
-    <addaction name="actionopen_Dir"/>
+    <addaction name="actionopen_dir"/>
     <addaction name="actionOpen_file"/>
     <addaction name="actionClose_dir"/>
    </widget>
+   <widget class="QMenu" name="menuCache">
+    <property name="title">
+     <string>Cache</string>
+    </property>
+    <addaction name="actionDelete_Cache_2"/>
+   </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>Help</string>
+    </property>
+    <addaction name="actionAbout"/>
+   </widget>
    <addaction name="menuFile"/>
+   <addaction name="menuCache"/>
+   <addaction name="menuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
-  <action name="actionopen_Dir">
+  <action name="actionopen_dir">
    <property name="text">
     <string>Open dir</string>
    </property>
@@ -172,6 +186,21 @@
   <action name="actionClose_dir">
    <property name="text">
     <string>Close dir</string>
+   </property>
+  </action>
+  <action name="actionDelete_Cache">
+   <property name="text">
+    <string>Delete Cache</string>
+   </property>
+  </action>
+  <action name="actionDelete_Cache_2">
+   <property name="text">
+    <string>Delete Cache</string>
+   </property>
+  </action>
+  <action name="actionAbout">
+   <property name="text">
+    <string>About</string>
    </property>
   </action>
  </widget>
