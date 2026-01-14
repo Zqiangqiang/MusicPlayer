@@ -197,11 +197,13 @@ MainWindow::MainWindow(QWidget *parent)
     m_spectrum->setGeometry(10, 350, 450, 50); // 自行微调
     m_spectrum->setBarCount(40);
 
-    // 关联播放器状态
-    connect(m_player, &QMediaPlayer::playbackStateChanged, m_spectrum, &SpectrumWidget::onPlaybackStateChanged);
-
     // 音量同步（现在用 QAudioOutput）
     connect(m_audioOutput, &QAudioOutput::volumeChanged, m_spectrum, &SpectrumWidget::setVolume);
+
+    // 关联频谱播放状态
+    connect(m_player, &QMediaPlayer::playbackStateChanged, this, [=](QMediaPlayer::PlaybackState state) {
+                m_spectrum->setPlaying(state == QMediaPlayer::PlayingState);
+    });
 
 }
 

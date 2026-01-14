@@ -16,9 +16,10 @@ public:
     void setBarCount(int count);
 
 public slots:
-    // 播放器状态变化
-    void onPlaybackStateChanged(QMediaPlayer::PlaybackState state);
-
+    // 统一频谱处理接口
+    void onTick();
+    // 设置播放状态
+    void setPlaying(bool playing);
     // 更新音量（可选）
     void setVolume(float volume);
 
@@ -33,6 +34,7 @@ private:
     QVector<float> m_levels;   // 0.0 ~ 1.0
     QTimer *m_timer;
     float m_volume = 1.0f;
+    bool m_playing = false;
 };
 
 #endif // SPECTRUMWIDGET_H
