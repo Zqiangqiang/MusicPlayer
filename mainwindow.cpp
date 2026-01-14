@@ -16,6 +16,8 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    // 支持托拽文件
+    setAcceptDrops(true);
     // 设置焦点
     this->setFocusPolicy(Qt::StrongFocus);
     // 默认不显示progressTipLabel标签
@@ -281,17 +283,38 @@ void MainWindow::onActionOpenDirClicked()
 
 void MainWindow::onActionOpenFileClicked()
 {
-    QString filepath = QFileDialog::getOpenFileName(this, "Select File", "./", "Audio (*.mp3 *.wav *.M4a)");
-    if (!filepath.isEmpty()) m_currentMusicPath = filepath;
-    m_player->setSource(QUrl::fromLocalFile(m_currentMusicPath));
-    // 更新唱片封面
-    updateDiscCover(m_currentMusicPath);
+    QString filePath = QFileDialog::getOpenFileName(this, "Select File", "./", "Audio (*.mp3 *.wav *.M4a)");
+    if (!filePath.isEmpty())
+        loadAppointMusicFile(filePath);
 }
 
 void MainWindow::onActionCloseDirClicked()
 {
-    m_musicDir = nullptr;
+    // 停止播放
+    m_player->stop();
+    m_player->setSource(QUrl());
+
+    // 清理播放器
     ui->musicList->clear();
+    m_musicList.clear();
+    m_currentIndex = -1;
+    m_musicDir = "";
+    m_currentMusicPath.clear();
+
+    m_playHistory.clear();
+    m_historyPos = -1;
+
+    // UI清理
+    ui->musicList->clear();
+    ui->lyricsEdit->clear();
+    ui->progressSlider->setValue(0);
+    ui->progressSlider->setRange(0, 0);
+    ui->playPauseBtn->setIcon(QIcon(":/pause.png"));
+
+    // 还原封面
+    m_discWidget->setPixmap(QPixmap(":/disc.png"));
+    // 清除状态栏
+    this->statusBar()->clearMessage();
 }
 
 void MainWindow::loadAppointMusicDir(const QString &dirPath)
@@ -306,6 +329,7 @@ void MainWindow::loadAppointMusicDir(const QString &dirPath)
 
     QStringList filters = {"*.mp3", "*.wav", "*.m4a"};
     QFileInfoList files = dir.entryInfoList(filters, QDir::Files);
+    m_musicDir = dirPath;
 
     QFont font("Arial", 22); // 设置字体大小
     int rowHeight = ui->musicList->height() / 10;       // 每行高度
@@ -319,6 +343,19 @@ void MainWindow::loadAppointMusicDir(const QString &dirPath)
         m_musicList.append(info.absoluteFilePath());
         ui->musicList->addItem(item);
     }
+}
+
+void MainWindow::loadAppointMusicFile(const QString &filePath)
+{
+    if (!filePath.endsWith(".mp3") &&
+        !filePath.endsWith(".flac") &&
+        !filePath.endsWith(".wav"))
+        return;
+
+    QFileInfo info =  QFileInfo(filePath);
+    m_musicList.append(info.absoluteFilePath());
+    ui->musicList->addItem(info.baseName());
+    m_currentIndex = 0;
 }
 
 void MainWindow::playMusicByIndex(int index)
@@ -584,4 +621,37 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
     }
 
     event->accept();
+}
+
+void MainWindow::dragEnterEvent(QDragEnterEvent *event)
+{
+    if (event->mimeData()->hasUrls()) {
+        // 接受托拽文件
+        event->acceptProposedAction();
+    }
+}
+
+void MainWindow::dropEvent(QDropEvent *event)
+{
+    QList<QUrl> urls = event->mimeData()->urls();
+    if (urls.isEmpty())
+        return;
+
+    // 拖拽视为一次新的播放源
+    onActionCloseDirClicked();
+
+    for (const QUrl &url : urls) {
+        QFileInfo info(url.toLocalFile());
+
+        if (info.isDir()) {
+            loadAppointMusicDir(info.absoluteFilePath());
+        } else if (info.isFile()) {
+            loadAppointMusicFile(info.absoluteFilePath());
+        }
+    }
+
+    // 自动播放第一首
+    if (!m_musicList.isEmpty()) {
+        playMusicByIndex(0);
+    }
 }

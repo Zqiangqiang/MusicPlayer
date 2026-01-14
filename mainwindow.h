@@ -20,6 +20,7 @@
 #include <QNetworkReply>
 #include <QGraphicsBlurEffect>
 #include <QTimer>
+#include <QMimeData>
 #include "lyrics.h"
 #include "rotatingdiscwidget.h"
 #include "lyricsmanager.h"
@@ -55,6 +56,9 @@ private slots:
 protected:
     // override 键盘处理事件
     void keyPressEvent(QKeyEvent *event) override;
+    // override 托拽处理事件
+    void dragEnterEvent(QDragEnterEvent *event) override;
+    void dropEvent(QDropEvent *event) override;
 
 private:
     // 设置背景
@@ -71,6 +75,8 @@ private:
     void onActionCloseDirClicked();
     // 加载指定目录下的歌曲信息
     void loadAppointMusicDir(const QString & dirPath);
+    // 加载指定路径下的歌曲
+    void loadAppointMusicFile(const QString& path);
     // 播放指定路径歌曲
     void playMusicByIndex(int idx);
     // 更新音乐列表中当前播放状态
