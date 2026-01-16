@@ -692,6 +692,8 @@ void MainWindow::dropEvent(QDropEvent *event)
 
         if (info.isDir()) {
             loadAppointMusicDir(info.absoluteFilePath());
+            //显示歌曲列表
+            ui->musicListBtn->click();
         } else if (info.isFile()) {
             loadAppointMusicFile(info.absoluteFilePath());
         }
