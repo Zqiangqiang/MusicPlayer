@@ -429,8 +429,10 @@ void MainWindow::playMusicByIndex(int index)
     // 获取歌名和歌手名
     QString currentTitle = parts[0];
     QString currentArtist = parts[1];
+    QString currentAlbum;
+    if (parts.size() > 2) currentAlbum = parts[2];
     // 获取对应歌手歌曲歌词
-    m_lyrics->requestLyrics(m_currentMusicPath, currentTitle, currentArtist);
+    m_lyrics->requestLyrics(m_currentMusicPath, currentTitle, currentArtist, currentAlbum);
     // 更新歌词
     m_lyricsView->setPreludeTip("歌词即将开始...");
     // 更新状态栏
@@ -589,10 +591,19 @@ void MainWindow::updateDiscCover(const QString &musicPath)
         m_discWidget->setPixmap(cover);
 
         // 尝试在线获取封面
-        QString title = QFileInfo(musicPath).completeBaseName().split("_")[0];
-        QString artist = QFileInfo(musicPath).completeBaseName().split("_")[1];
-        QString urlStr = QString("https://api.lrc.cx/cover?title=%1&artist=%2")
-                            .arg(QUrl::toPercentEncoding(title)).arg(QUrl::toPercentEncoding(artist));
+        QString urlStr;
+        QStringList element = QFileInfo(musicPath).completeBaseName().split("_");
+        if (element.size() > 2) {
+            // 小众歌曲添加专辑参数精准定位
+            urlStr = QString("https://api.lrc.cx/cover?title=%1&artist=%2&album=%3")
+                        .arg(QUrl::toPercentEncoding(element[0]))
+                        .arg(QUrl::toPercentEncoding(element[1]))
+                        .arg(QUrl::toPercentEncoding(element[2]));
+        } else {
+            urlStr = QString("https://api.lrc.cx/cover?title=%1&artist=%2")
+                         .arg(QUrl::toPercentEncoding(element[0]))
+                         .arg(QUrl::toPercentEncoding(element[1]));
+        }
 
         QNetworkRequest requestCover(QUrl(urlStr, QUrl::StrictMode));
         QNetworkReply *reply = m_networkManager->get(requestCover);

@@ -63,7 +63,7 @@ void LyricsManager::saveToCache(const QString &musicPath, const QString &lrcText
     out << lrcText;
 }
 
-void LyricsManager::requestLyrics(const QString &musicPath, const QString &title, const QString &artist)
+void LyricsManager::requestLyrics(const QString &musicPath, const QString &title, const QString &artist, const QString &album)
 {
     // 1️⃣ 先尝试本地缓存
     QString lrc;
@@ -72,11 +72,12 @@ void LyricsManager::requestLyrics(const QString &musicPath, const QString &title
         return;
     }
 
-    // 2️⃣ 构造请求（示例，用你之前的 API）
+    // 2️⃣ 构造请求
     QUrl url("https://api.lrc.cx/lyrics");
     QUrlQuery query;
     query.addQueryItem("title", title);
     query.addQueryItem("artist", artist);
+    query.addQueryItem("album", album);
     query.addQueryItem("od", "desc");
     url.setQuery(query);
 

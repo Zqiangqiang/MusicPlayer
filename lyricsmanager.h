@@ -11,7 +11,7 @@ public:
     explicit LyricsManager(QObject *parent = nullptr);
 
     // 对外唯一接口
-    void requestLyrics(const QString &musicPath, const QString &title, const QString &artist);
+    void requestLyrics(const QString &musicPath, const QString &title, const QString &artist, const QString &album);
 
 signals:
     // 成功拿到歌词（不管来自缓存还是网络）
