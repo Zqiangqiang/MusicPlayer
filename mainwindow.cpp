@@ -368,6 +368,7 @@ void MainWindow::onActionCloseDirClicked()
 void MainWindow::loadAppointMusicDir(const QString &dirPath)
 {
     ui->musicList->clear();
+    m_musicList.clear();
 
     QDir dir(dirPath);
     if (!dir.exists()) {
